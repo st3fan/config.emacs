@@ -26,14 +26,17 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-;; ;; ==========================================================================
-;; ;; The following paths do not exist everywhere but they are common
-;; ;; enough to add without checks. Both go in front of PATH so that we
-;; ;; can override commands like ctags.
-;; ;; ==========================================================================
+;; ==========================================================================
+;; The following paths do not exist everywhere but they are common
+;; enough to add without checks. Both go in front of PATH so that we
+;; can override commands like ctags.
+;; ==========================================================================
 
 (push "/usr/local/bin" exec-path)
 (push "~/go/bin" exec-path)
+
+(setenv "PATH" (concat "/usr/local/bin" ":" (getenv "PATH")))
+(setenv "PATH" (concat "~/go/bin" ":" (getenv "PATH")))
 
 ;; ==========================================================================
 ;; Configure packages
@@ -180,6 +183,9 @@
 (use-package cider-mode
   :config (setq cider-repl-display-help-banner nil)
   :commands cider-jack-in)
+
+(use-package fish-mode
+  :ensure t)
 
 ;; ==========================================================================
 ;; Random customizations
