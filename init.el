@@ -63,7 +63,7 @@
 (use-package magit
   :ensure t
   :commands magit-get-top-dir
-  :bind ("C-c g" . magit-status))
+  :bind (("C-x g" . magit-status)))
 
 (use-package magithub
   :after magit
@@ -71,32 +71,6 @@
 
 (use-package expand-region
   :init (global-set-key (kbd "M-e") 'er/expand-region))
-
-;; TODO This should inherit from the shell instead
-;; (setenv "GOPATH" "/Users/stefan/go")
-;; (add-to-list 'exec-path "/Users/stefan/go/bin")
-
-;;
-;; Install the following tools:
-;;
-;;   go get -u -v golang.org/x/tools/cmd/goimports
-;;   go get -u -v github.com/nsf/gocode
-;;
-
-(use-package go-mode
-  :ensure t
-  :init
-    (add-hook 'go-mode-hook
-	      (lambda ()
-		(setq gofmt-command "goimports")
-		(add-hook 'before-save-hook 'gofmt-before-save)
-		(setq truncate-lines t)
-		(setq indent-tabs-mode t)
-		(setq tab-width 4))))
-
-(use-package go-eldoc
-  :ensure t
-  :init (add-hook 'go-mode-hook 'go-eldoc-setup))
 
 ;; (use-package auto-complete
 ;;   :config
@@ -111,18 +85,6 @@
 ;;             (exec-path-from-shell-initialize)
 ;;             (exec-path-from-shell-copy-env "GOPATH")))
 
-(use-package company
-  :ensure t
-  :diminish company-mode
-  :init (add-hook 'after-init-hook 'global-company-mode))
-
-(use-package company-go
-  :ensure t
-  :init (add-hook 'go-mode-hook
-                  (lambda ()
-                    (set (make-local-variable 'company-backends) '(company-go))
-                    (company-mode))))
-
 (use-package rainbow-delimiters
   :ensure t
   :init (add-hook 'prog-mode-hook 'rainbow-delimiters-mode))
@@ -136,55 +98,7 @@
 ;;   :bind (("M-x" . smex))
 ;;   :config (smex-initialize))
 
-(use-package gruvbox-theme
-  :ensure t
-  :config (load-theme 'gruvbox t))
-
-(use-package git-gutter-fringe
-  :if window-system
-  :ensure t
-  :diminish git-gutter-mode
-  :config (global-git-gutter-mode))
-
-(use-package paren
-  :ensure t
-  :init (show-paren-mode)
-  :config (setq show-paren-when-point-inside-paren nil
-                show-paren-when-point-in-periphery t))
-
-(use-package hl-line
-  :ensure t
-  :init (global-hl-line-mode))
-
-(use-package cc-mode
-  :config (setq c-default-style "ellemtel"
-                c-basic-offset 3))
-
-(use-package linum-mode
-  :init (add-hook 'prog-mode-hook 'linum-mode))
-(setq linum-format " %d ")
-
 (use-package projectile
-  :ensure t)
-
-(use-package inf-clojure
-  :ensure t
-  :commands inf-clojure-minor-mode)
-
-(use-package clojure-mode
-  :ensure t
-  :init
-  ;;(add-hook 'clojure-mode-hook 'paredit-mode)
-  (add-hook 'clojure-mode-hook #'rainbow-delimiters-mode)
-  (add-hook 'clojure-mode-hook 'projectile-mode)
-  ;;(add-hook 'clojure-mode-hook 'flycheck-mode)
-  (add-hook 'clojure-mode-hook 'inf-clojure-minor-mode))
-
-(use-package cider-mode
-  :config (setq cider-repl-display-help-banner nil)
-  :commands cider-jack-in)
-
-(use-package fish-mode
   :ensure t)
 
 ;; ==========================================================================
@@ -232,29 +146,15 @@
 (recentf-mode 1)                        ; keep a list of recently opened files
 
 ;; ==========================================================================
-;; Prefer Source Code Pro Light and remove all bold and underline faces
+;; Load all the individual init files
 ;; ==========================================================================
 
-(when (featurep 'ns-win)
-  (set-face-attribute 'default nil :family "Source Code Pro" :height 170 :weight 'light))
-
-(mapc (lambda (face)
-        (set-face-attribute face nil :weight 'light :underline nil))
-      (face-list))
-
-;; ==========================================================================
-;; Some defaults for SQL Mode
-;; ==========================================================================
-
-(setq sql-postgres-login-params
-      '((user :default (user-login-name))
-        (database :default (user-login-name))
-        (server :default "localhost")
-        (port :default 5432)))
-
-(add-hook 'sql-interactive-mode-hook
-          (lambda ()
-            (toggle-truncate-lines t)))
+(load "~/.emacs.d/init-appearance.el")
+(load "~/.emacs.d/init-clojure.el")
+(load "~/.emacs.d/init-company.el")
+(load "~/.emacs.d/init-go.el")
+(load "~/.emacs.d/init-modes.el")
+(load "~/.emacs.d/init-sql.el")
 
 ;; ==========================================================================
 ;; Finally load a 'local' config, which is not stored in version
