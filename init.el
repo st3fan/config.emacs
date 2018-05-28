@@ -62,7 +62,6 @@
 
 (use-package magit
   :ensure t
-  :commands magit-get-top-dir
   :bind (("C-x g" . magit-status)))
 
 (use-package magithub
@@ -70,6 +69,7 @@
   :config (magithub-feature-autoinject t))
 
 (use-package expand-region
+  :ensure t
   :init (global-set-key (kbd "M-e") 'er/expand-region))
 
 ;; (use-package auto-complete
@@ -155,6 +155,7 @@
 (load "~/.emacs.d/init-go.el")
 (load "~/.emacs.d/init-modes.el")
 (load "~/.emacs.d/init-sql.el")
+(load "~/.emacs.d/init-rust.el")
 
 ;; ==========================================================================
 ;; Finally load a 'local' config, which is not stored in version
