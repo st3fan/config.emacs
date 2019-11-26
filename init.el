@@ -64,9 +64,9 @@
   :ensure t
   :bind (("C-x g" . magit-status)))
 
-(use-package magithub
-  :after magit
-  :config (magithub-feature-autoinject t))
+;;(use-package magithub
+;;  :after magit
+;;  :config (magithub-feature-autoinject t))
 
 (use-package expand-region
   :ensure t
@@ -150,6 +150,7 @@
 ;; ==========================================================================
 
 (load "~/.emacs.d/init-appearance.el")
+(load "~/.emacs.d/init-projectile.el")
 (load "~/.emacs.d/init-clojure.el")
 (load "~/.emacs.d/init-company.el")
 (load "~/.emacs.d/init-go.el")
