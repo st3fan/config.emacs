@@ -62,6 +62,10 @@
 
 ;;
 
+(add-to-list 'auto-mode-alist '("COMMIT_EDITMSG" . git-commit-major-mode))
+
+;;
+
 (use-package leuven-theme
   :ensure t
   :init (load-theme 'leuven :no-confirm))
@@ -135,6 +139,10 @@
 (use-package magit
   :ensure t
   :config (setq magit-define-global-key-bindings 'recommended))
+
+(use-package hl-todo
+  :ensure t
+  :config (global-hl-todo-mode))
 
 ;;
 
