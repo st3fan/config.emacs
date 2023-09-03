@@ -1,8 +1,8 @@
-(if (< emacs-major-version 29)
-    (error "requires Emacs 29 or later."))
+(if (< emacs-major-version 28)
+    (error "requires Emacs 28 or later."))
 
-(setq gc-cons-threshold (* 128 1024 1024))
-(setq read-process-output-max (* 1024 1024)) ;; For LSP Servers
+(setq gc-cons-percentage 0.5
+      gc-cons-threshold (* 128 1024 1024))
 
 ;; Package
 
@@ -49,6 +49,9 @@
 
 (show-paren-mode 1)
 (setq show-paren-delay 0)
+(setq show-paren-context-when-offscreen t)
+
+(global-hl-line-mode 1)
 
 (setq custom-file "~/.emacs.custom.el")
 
@@ -62,13 +65,54 @@
 
 ;;
 
-(add-to-list 'auto-mode-alist '("COMMIT_EDITMSG" . git-commit-major-mode))
+(add-to-list 'auto-mode-alist '("COMMIT_EDITMSG" . git-commit-mode))
+
+(add-hook
+ 'Info-mode-hook
+ #'(lambda ()
+     (add-to-list 'Info-directory-list (expand-file-name "~/.local/share/info"))))
 
 ;;
 
-(use-package leuven-theme
+(use-package dashboard
+  :config
+  (setq dashboard-startup-banner 'logo
+        dashboard-set-heading-icons t
+        dashboard-set-file-icons t
+        show-week-agenda-p nil)
+  (dashboard-setup-startup-hook))
+
+(use-package vertico
   :ensure t
-  :init (load-theme 'leuven :no-confirm))
+  :init (vertico-mode))
+
+(use-package savehist
+  :ensure t
+  :init (savehist-mode))
+
+(use-package marginalia
+  :after vertico
+  :init (marginalia-mode))
+
+;; (use-package consult
+;;   :ensure t)
+
+(use-package which-key
+  :ensure t
+  :config
+  (setq which-key-idle-delay 0.5)
+  (which-key-mode))
+
+;; (use-package leuven-theme
+;;   :ensure t
+;;   :init (load-theme 'leuven :no-confirm))
+
+(use-package catppuccin-theme
+  :ensure t
+  :init (progn
+          (setq catppuccin-flavor 'mocha)
+          (load-theme 'catppuccin :no-confirm)
+          (catppuccin-reload)))
 
 (use-package doom-modeline
  :ensure t
@@ -97,6 +141,10 @@
   :ensure t
   :init (global-set-key (kbd "M-e") 'er/expand-region))
 
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
 (use-package lsp-mode
   :ensure t
   :config (progn
@@ -116,12 +164,14 @@
   :ensure t
   :commands lsp-ui-mode
   :config (setq lsp-ui-sideline-enable nil
+                lsp-ui-sideline-show-symbol t
+                lsp-ui-sideline-show-hover t
+                lsp-ui-sideline-ignore-duplicate t
+                lsp-ui-sideline-show-diagnostics t
 	        lsp-ui-peek-enable t
                 lsp-ui-doc-enable nil
-                lsp-ui-flycheck-enable nil
-		lsp-ui-sideline-enable nil
-                lsp-ui-imenu-enable nil
-                lsp-ui-sideline-ignore-duplicate t))
+                lsp-ui-flycheck-enable t
+                lsp-ui-imenu-enable nil))
 
 (use-package company
   :ensure t
@@ -143,6 +193,9 @@
 (use-package hl-todo
   :ensure t
   :config (global-hl-todo-mode))
+
+(use-package git-link
+  :ensure t)
 
 ;;
 
@@ -175,6 +228,67 @@
 
 (use-package dockerfile-mode
   :ensure t)
+
+;; This has no Go support yet
+
+;; (if (>= emacs-major-version 29)
+;;     (use-package treesit
+;;       :preface
+;;       (defun mp-setup-install-grammars ()
+;;         "Install Tree-sitter grammars if they are absent."
+;;         (interactive)
+;;         (dolist (grammar
+;;                  '((go "https://github.com/tree-sitter/tree-sitter-go")
+;;                    (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+;;                    (json "https://github.com/tree-sitter/tree-sitter-json")
+;;                    (python "https://github.com/tree-sitter/tree-sitter-python")
+;;                    (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+;;           (add-to-list 'treesit-language-source-alist grammar)
+;;           ;; Only install `grammar' if we don't already have it
+;;           ;; installed. However, if you want to *update* a grammar then
+;;           ;; this obviously prevents that from happening.
+;;           (unless (treesit-language-available-p (car grammar))
+;;             (treesit-install-language-grammar (car grammar)))))
+
+;;       ;; Optional, but recommended. Tree-sitter enabled major modes are
+;;       ;; distinct from their ordinary counterparts.
+;;       ;;
+;;       ;; You can remap major modes with `major-mode-remap-alist'. Note
+;;       ;; that this does *not* extend to hooks! Make sure you migrate them
+;;       ;; also
+;;       (dolist (mapping '((go-mode . go-ts-mode)
+;;                          (go-mod-mode . go-mod-ts-mode)
+;;                          (json-mode . json-ts-mode)
+;;                          (python-mode . python-ts-mode)
+;;                          (yaml-mode . yaml-ts-mode)))
+;;         (add-to-list 'major-mode-remap-alist mapping))
+
+;;       :config
+;;       (mp-setup-install-grammars)
+
+;;       ;; Do not forget to customize Combobulate to your liking:
+;;       ;;
+;;       ;;  M-x customize-group RET combobulate RET
+;;       ;;
+;;       (if (file-directory-p "~/go/src/github.com/st3fan/mickeynp/combobulate")
+;;           (use-package combobulate
+;;             :preface
+;;             ;; You can customize Combobulate's key prefix here.
+;;             ;; Note that you may have to restart Emacs for this to take effect!
+;;             (setq combobulate-key-prefix "C-c o")
+
+;;             ;; Optional, but recommended.
+;;             ;;
+;;             ;; You can manually enable Combobulate with `M-x
+;;             ;; combobulate-mode'.
+;;             :hook ((python-ts-mode . combobulate-mode)
+;;                    (go-ts-mode . combobulate-mode)
+;;                    (gomod-ts-mode . combobulate-mode)
+;;                    (yaml-ts-mode . combobulate-mode)
+;;                    (json-ts-mode . combobulate-mode))
+;;             ;; Amend this to the directory where you keep Combobulate's source
+;;             ;; code.
+;;             :load-path ("~/go/src/github.com/st3fan/mickeynp/combobulate")))))
 
 ;;
 
