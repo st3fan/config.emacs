@@ -53,6 +53,8 @@
 
 (global-hl-line-mode 1)
 
+(setq eldoc-echo-area-use-multiline-p 1)
+
 (setq custom-file "~/.emacs.custom.el")
 
 ;;
@@ -99,9 +101,8 @@
 
 (use-package which-key
   :ensure t
-  :config
-  (setq which-key-idle-delay 0.5)
-  (which-key-mode))
+  :config (setq which-key-idle-delay 0.5)
+  :init (which-key-mode))
 
 ;; (use-package leuven-theme
 ;;   :ensure t
@@ -113,6 +114,11 @@
           (setq catppuccin-flavor 'mocha)
           (load-theme 'catppuccin :no-confirm)
           (catppuccin-reload)))
+
+;; (use-package treesit-auto
+;;   :ensure t
+;;   :config
+;;   (global-treesit-auto-mode))
 
 (use-package doom-modeline
  :ensure t
@@ -141,37 +147,12 @@
   :ensure t
   :init (global-set-key (kbd "M-e") 'er/expand-region))
 
+(use-package flymake
+  :ensure t)
+
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode))
-
-(use-package lsp-mode
-  :ensure t
-  :config (progn
-            (setq lsp-enable-snippet t
-                  lsp-auto-guess-root t
-                  lsp-enable-symbol-highlighting nil
-                  lsp-headerline-breadcrumb-enable nil
-                  lsp-prefer-flymake nil)
-            (add-to-list 'lsp-file-watch-ignored "^\\/opt\\/homebrew")
-            (lsp-register-custom-settings
-             '(("gopls.completeUnimported" t t)
-               ("gopls.staticcheck" t t))))
-  :hook (go-mode . lsp-deferred)
-  :commands (lsp lsp-deferred))
-
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode
-  :config (setq lsp-ui-sideline-enable nil
-                lsp-ui-sideline-show-symbol t
-                lsp-ui-sideline-show-hover t
-                lsp-ui-sideline-ignore-duplicate t
-                lsp-ui-sideline-show-diagnostics t
-	        lsp-ui-peek-enable t
-                lsp-ui-doc-enable nil
-                lsp-ui-flycheck-enable t
-                lsp-ui-imenu-enable nil))
 
 (use-package company
   :ensure t
@@ -184,7 +165,7 @@
 (use-package yasnippet
   :ensure t
   :commands yas-minor-mode
-  :hook (go-mode . yas-minor-mode))
+  :hook (prog-mode . yas-minor-mode))
 
 (use-package magit
   :ensure t
@@ -199,18 +180,18 @@
 
 ;;
 
-(use-package go-mode
+(use-package go-ts-mode
   :ensure t
-  :init (add-hook 'go-mode-hook
-                  (lambda ()
-                    (setq truncate-lines t)
-                    (setq indent-tabs-mode t)
-                    (setq tab-width 4))))
+  :custom (go-ts-mode-indent-offset 4)
+  :config (add-hook 'go-ts-mode-hook
+                    (lambda ()
+                      (add-hook 'before-save-hook 'gofmt-before-save)
+                      ;;(setq truncate-lines t)
+                      (setq indent-tabs-mode t)
+                      (setq tab-width 4))))
 
- (defun lsp-go-install-save-hooks ()
-   (add-hook 'before-save-hook #'lsp-format-buffer t t)
-   (add-hook 'before-save-hook #'lsp-organize-imports t t))
- (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
+(use-package rust-mode
+  :ensure t)
 
 (use-package cc-mode
   :ensure t
@@ -229,66 +210,28 @@
 (use-package dockerfile-mode
   :ensure t)
 
-;; This has no Go support yet
+(defun st3fan/eglot-format-buffer-on-save ()
+  (add-hook 'before-save-hook
+            (lambda ()
+              (eglot-code-action-organize-imports (point-min))) -11 t)
+  (add-hook 'before-save-hook
+            (lambda ()
+              (xeglot-format-buffer)) -10 t))
 
-;; (if (>= emacs-major-version 29)
-;;     (use-package treesit
-;;       :preface
-;;       (defun mp-setup-install-grammars ()
-;;         "Install Tree-sitter grammars if they are absent."
-;;         (interactive)
-;;         (dolist (grammar
-;;                  '((go "https://github.com/tree-sitter/tree-sitter-go")
-;;                    (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
-;;                    (json "https://github.com/tree-sitter/tree-sitter-json")
-;;                    (python "https://github.com/tree-sitter/tree-sitter-python")
-;;                    (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
-;;           (add-to-list 'treesit-language-source-alist grammar)
-;;           ;; Only install `grammar' if we don't already have it
-;;           ;; installed. However, if you want to *update* a grammar then
-;;           ;; this obviously prevents that from happening.
-;;           (unless (treesit-language-available-p (car grammar))
-;;             (treesit-install-language-grammar (car grammar)))))
-
-;;       ;; Optional, but recommended. Tree-sitter enabled major modes are
-;;       ;; distinct from their ordinary counterparts.
-;;       ;;
-;;       ;; You can remap major modes with `major-mode-remap-alist'. Note
-;;       ;; that this does *not* extend to hooks! Make sure you migrate them
-;;       ;; also
-;;       (dolist (mapping '((go-mode . go-ts-mode)
-;;                          (go-mod-mode . go-mod-ts-mode)
-;;                          (json-mode . json-ts-mode)
-;;                          (python-mode . python-ts-mode)
-;;                          (yaml-mode . yaml-ts-mode)))
-;;         (add-to-list 'major-mode-remap-alist mapping))
-
-;;       :config
-;;       (mp-setup-install-grammars)
-
-;;       ;; Do not forget to customize Combobulate to your liking:
-;;       ;;
-;;       ;;  M-x customize-group RET combobulate RET
-;;       ;;
-;;       (if (file-directory-p "~/go/src/github.com/st3fan/mickeynp/combobulate")
-;;           (use-package combobulate
-;;             :preface
-;;             ;; You can customize Combobulate's key prefix here.
-;;             ;; Note that you may have to restart Emacs for this to take effect!
-;;             (setq combobulate-key-prefix "C-c o")
-
-;;             ;; Optional, but recommended.
-;;             ;;
-;;             ;; You can manually enable Combobulate with `M-x
-;;             ;; combobulate-mode'.
-;;             :hook ((python-ts-mode . combobulate-mode)
-;;                    (go-ts-mode . combobulate-mode)
-;;                    (gomod-ts-mode . combobulate-mode)
-;;                    (yaml-ts-mode . combobulate-mode)
-;;                    (json-ts-mode . combobulate-mode))
-;;             ;; Amend this to the directory where you keep Combobulate's source
-;;             ;; code.
-;;             :load-path ("~/go/src/github.com/st3fan/mickeynp/combobulate")))))
+(use-package eglot
+  :ensure t
+  :config (setq-default eglot-workspace-configuration '((:gopls . ((usePlaceholders . t)
+                                                                   (allExperiments . t)
+                                                                   (staticcheck . t)
+                                                                   (analyses . (
+                                                                                (nilness . t)
+                                                                                (fieldalignment . t)
+                                                                                (shadow . t)
+                                                                                (unusedparams . t)
+                                                                                (unusedwrite . t)))
+                                                                   (matcher . "Fuzzy"))))
+                        eglot-events-buffer-size 0)
+  :hook ((go-ts-mode . eglot-ensure))) ;; (eglot-managed-mode . st3fan/eglot-format-buffer-on-save)))
 
 ;;
 
