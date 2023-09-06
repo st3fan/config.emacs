@@ -216,7 +216,7 @@
               (eglot-code-action-organize-imports (point-min))) -11 t)
   (add-hook 'before-save-hook
             (lambda ()
-              (xeglot-format-buffer)) -10 t))
+              (eglot-format-buffer)) -10 t))
 
 (use-package eglot
   :ensure t
