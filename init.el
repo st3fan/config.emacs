@@ -76,6 +76,16 @@
 
 ;;
 
+;;(setq treesit-language-source-alist
+;;      '((templ "https://github.com/vrischmann/tree-sitter-templ")
+;;        (css "https://github.com/tree-sitter/tree-sitter-css")
+;;        (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")))
+
+;;(add-to-list 'load-path "/Users/stefan/go/src/github.com/st3fan/templ-ts-mode")
+;;(require 'templ-ts-mode)
+
+;;
+
 (use-package dashboard
   :config
   (setq dashboard-startup-banner 'logo
@@ -111,7 +121,7 @@
 (use-package catppuccin-theme
   :ensure t
   :init (progn
-          (setq catppuccin-flavor 'mocha)
+          (setq catppuccin-flavor 'latte)
           (load-theme 'catppuccin :no-confirm)
           (catppuccin-reload)))
 
@@ -178,17 +188,19 @@
 (use-package git-link
   :ensure t)
 
+(use-package exercism)
+
 ;;
 
-(use-package go-ts-mode
-  :ensure t
-  :custom (go-ts-mode-indent-offset 4)
-  :config (add-hook 'go-ts-mode-hook
-                    (lambda ()
-                      (add-hook 'before-save-hook 'gofmt-before-save)
-                      ;;(setq truncate-lines t)
-                      (setq indent-tabs-mode t)
-                      (setq tab-width 4))))
+;; (use-package go-ts-mode
+;;   :ensure t
+;;   :custom (go-ts-mode-indent-offset 4)
+;;   :config (add-hook 'go-ts-mode-hook
+;;                     (lambda ()
+;;                       (add-hook 'before-save-hook 'gofmt-before-save)
+;;                       ;;(setq truncate-lines t)
+;;                       (setq indent-tabs-mode t)
+;;                       (setq tab-width 4))))
 
 (use-package rust-mode
   :ensure t)
@@ -210,28 +222,78 @@
 (use-package dockerfile-mode
   :ensure t)
 
-(defun st3fan/eglot-format-buffer-on-save ()
-  (add-hook 'before-save-hook
-            (lambda ()
-              (eglot-code-action-organize-imports (point-min))) -11 t)
-  (add-hook 'before-save-hook
-            (lambda ()
-              (eglot-format-buffer)) -10 t))
+;; (defun st3fan/eglot-format-buffer-on-save ()
+;;   (add-hook 'before-save-hook
+;;             (lambda ()
+;;               (eglot-code-action-organize-imports (point-min))) -11 t)
+;;   (add-hook 'before-save-hook
+;;             (lambda ()
+;;               (eglot-format-buffer)) -10 t))
+
+;; (use-package eglot
+;;   :ensure t
+;;   :config (setq-default eglot-workspace-configuration '((:gopls . ((usePlaceholders . t)
+;;                                                                    (allExperiments . t)
+;;                                                                    (staticcheck . t)
+;;                                                                    (analyses . (
+;;                                                                                 (nilness . t)
+;;                                                                                 (fieldalignment . t)
+;;                                                                                 (shadow . t)
+;;                                                                                 (unusedparams . t)
+;;                                                                                 (unusedwrite . t)))
+;;                                                                    (matcher . "Fuzzy"))))
+;;                         eglot-events-buffer-size 0)
+;;   :hook ((go-ts-mode . eglot-ensure))) ;; (eglot-managed-mode . st3fan/eglot-format-buffer-on-save)))
+
+;; Project
+
+(defun project-find-go-module (dir)
+  (when-let ((root (locate-dominating-file dir "go.mod")))
+    (cons 'go-module root)))
+
+(cl-defmethod project-root ((project (head go-module)))
+  (cdr project))
+
+(use-package project
+  :ensure t
+  :config (add-hook 'project-find-functions #'project-find-go-module))
+
+;; Eglot
 
 (use-package eglot
   :ensure t
-  :config (setq-default eglot-workspace-configuration '((:gopls . ((usePlaceholders . t)
-                                                                   (allExperiments . t)
-                                                                   (staticcheck . t)
-                                                                   (analyses . (
-                                                                                (nilness . t)
-                                                                                (fieldalignment . t)
-                                                                                (shadow . t)
-                                                                                (unusedparams . t)
-                                                                                (unusedwrite . t)))
-                                                                   (matcher . "Fuzzy"))))
-                        eglot-events-buffer-size 0)
-  :hook ((go-ts-mode . eglot-ensure))) ;; (eglot-managed-mode . st3fan/eglot-format-buffer-on-save)))
+  :config (setq-default eglot-workspace-configuration
+                        '((:gopls . ((usePlaceholders . t)
+                                     (staticcheck . t)
+                                     (analyses . ((nilness . t)
+                                                  (fieldalignment . t)
+                                                  (shadow . t)
+                                                  (unusedparams . t)
+                                                  (unusedwrite . t))))))))
+
+(defun my-eglot-format-buffer-on-save ()
+  (add-hook 'before-save-hook #'eglot-format-buffer -10 t))
+
+(defun my-eglot-organize-imports ()
+  (interactive)
+  (eglot-code-actions nil nil "source.organizeImports" t))
+
+(defun my-eglot-organize-imports-on-save ()
+  (add-hook 'before-save-hook #'my-eglot-organize-imports -10 t))
+
+
+;; Go
+
+(setq-default tab-width 4)
+
+(use-package go-ts-mode
+  :ensure t
+  :custom (go-ts-mode-indent-offset 4)
+  :config (progn
+            (add-hook 'go-ts-mode-hook #'eglot-ensure)
+            (add-hook 'go-ts-mode-hook #'my-eglot-format-buffer-on-save)
+            (add-hook 'go-ts-mode-hook #'my-eglot-organize-imports-on-save)))
+
 
 ;;
 
